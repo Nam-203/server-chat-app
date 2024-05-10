@@ -1,5 +1,6 @@
 const express = require("express");
 const morgan = require("morgan");
+const router = require("./routes/index");
 //morgan: Middleware ghi nhật ký yêu cầu HTTP để ghi lại các yêu cầu đến máy chủ.
 const app = express();
 const rateLitmit = require("express-rate-limit");
@@ -35,5 +36,6 @@ const limiter = rateLitmit({
 app.use("/tawk", limiter);
 app.use(mongosanitize());
 app.use(xss());
+app.use(router)
 
 module.exports = app;

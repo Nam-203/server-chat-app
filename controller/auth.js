@@ -3,6 +3,8 @@ const User = require("../models/UserModel");
 const filterObj = require("../utils/filterObj");
 const crypto = require("crypto");
 const otpGenerator = require("otp-generator");
+const catchAsync = require("../utils/catchAsync");
+const mailService = require("../services/mailer");
 const signToken = (userId) => jwt.sign({ userId }, process.env.JWT_SECRET);
 exports.register = async (req, res, next) => {
   const { firstName, lastName, email, password } = req.body;
@@ -22,7 +24,7 @@ exports.register = async (req, res, next) => {
         message: "email already in use, please login again",
       });
     } else if (existing_user) {
-      await User.findByIdAndUpdate({ email: email }, filterObj, {
+      await User.findOneAndUpdate({ email: email }, filteredBody, {
         new: true,
         validateModifiedOnly: true,
       });
@@ -51,7 +53,9 @@ exports.sendOTP = async (req, res, next) => {
     otp: new_otp,
     otp_expiry_time,
   });
-  //todo send otp
+  //todo send otp mail
+  const email = req.body.email;
+await mailService.sendEmail(email,new_otp)
   return res.status(200).json({
     status: "success",
     message: "OTP sent successfully",
@@ -83,6 +87,8 @@ exports.verifyOTP = async (req, res) => {
     status: "success",
     message: "otp verified success!",
     token,
+    user_id: user._id,
+
   });
 };
 exports.login = catchAsync(async (req, res, next) => {
