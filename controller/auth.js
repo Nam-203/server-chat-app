@@ -5,6 +5,8 @@ const crypto = require("crypto");
 const otpGenerator = require("otp-generator");
 const catchAsync = require("../utils/catchAsync");
 const mailService = require("../services/mailer");
+const emailService = require("../services/sendResetPass");
+const jwt = require("jsonwebtoken");
 const signToken = (userId) => jwt.sign({ userId }, process.env.JWT_SECRET);
 exports.register = async (req, res, next) => {
   const { firstName, lastName, email, password } = req.body;
@@ -49,48 +51,67 @@ exports.sendOTP = async (req, res, next) => {
     specialChars: false,
   });
   const otp_expiry_time = Date.now() + 10 * 60 * 1000; //10 minutes
-  await User.findByIdAndUpdate(userId, {
-    otp: new_otp,
+  const user = await User.findByIdAndUpdate(userId, {
     otp_expiry_time,
   });
+  user.otp = new_otp.toString();
+  await user.save({ new: true, validateModifiedOnly: true });
   //todo send otp mail
   const email = req.body.email;
-await mailService.sendEmail(email,new_otp)
+  await mailService.sendEmail(email, new_otp);
   return res.status(200).json({
     status: "success",
     message: "OTP sent successfully",
   });
 };
-exports.verifyOTP = async (req, res) => {
-  //verify and up usser
+exports.verifyOTP = catchAsync(async (req, res, next) => {
+  // verify otp and update user accordingly
   const { email, otp } = req.body;
+  console.log(req.body);
   const user = await User.findOne({
     email,
     otp_expiry_time: { $gt: Date.now() },
   });
+
   if (!user) {
     return res.status(400).json({
       status: "error",
-      message: "Email invalid or OTP expired",
+      message: "Email is invalid or OTP expired",
     });
   }
-  if (!(await user.correctOTP(otp, user.otp))) {
+
+  if (user.verified) {
     return res.status(400).json({
       status: "error",
-      message: "Incorrect OTP",
+      message: "Email is already verified",
     });
   }
-  (user.otp = undefined), (user.verified = true);
+
+  if (!(await user.correctOTP(otp, user.otp))) {
+    res.status(400).json({
+      status: "error",
+      message: "OTP is incorrect",
+    });
+
+    return;
+  }
+
+  // OTP is correct
+
+  user.verified = true;
+  user.otp = undefined;
   await user.save({ new: true, validateModifiedOnly: true });
+
   const token = signToken(user._id);
-  return res.status(200).json({
+
+  res.status(200).json({
     status: "success",
-    message: "otp verified success!",
+    message: "OTP verified Successfully!",
     token,
     user_id: user._id,
-
   });
-};
+});
+
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
 
@@ -133,35 +154,43 @@ exports.login = catchAsync(async (req, res, next) => {
     user_id: user._id,
   });
 });
-exports.forgotPassword = async (req, res, next) => {
-  //1 get email from usserver
+exports.forgotPassword = catchAsync(async (req, res, next) => {
+  // 1) Get user based on POSTed email
   const user = await User.findOne({ email: req.body.email });
   if (!user) {
-    return res.status(400).json({
+    return res.status(404).json({
       status: "error",
-      message: "there are no users with that email address",
+      message: "There is no user with email address.",
     });
   }
-  //generate the readom reset token
-  const resetToken = user.createPasswodResetToken();
-  await user.save({ validateModifiedOnly: false });
+
+  // 2) Generate the random reset token
+  const resetToken = user.createPasswordResetToken() ;
+  await user.save({ validateBeforeSave: false });
+
+  // 3) Send it to user's email
   try {
-    // todo =>send mail to reset
-    const resetURL = `https://tawk.com/auth/reset-password/?code=${resetToken}`;
-    return res.status(200).json({
-      status: "ok",
-      message: "Reset password link sent to your email",
+    const resetURL = `http://localhost:3001/auth/new-password?token=${resetToken}`;
+    // TODO => Send Email with this Reset URL to user's email address
+
+    console.log(resetURL);
+const email = user.email
+    await emailService.sendEmailLink(email, resetURL);
+    res.status(200).json({
+      status: "success",
+      message: "Token sent to email!",
     });
-  } catch (error) {
+  } catch (err) {
+    console.log(err);
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
+    await user.save({ validateBeforeSave: false });
 
     return res.status(500).json({
-      status: "error",
-      message: "there was an error sending the email, please try again",
+      message: "There was an error sending the email. Try again later!",
     });
   }
-};
+});
 exports.resetPassword = async (req, res, next) => {
   // get uuser based token
   const hashedToken = crypto

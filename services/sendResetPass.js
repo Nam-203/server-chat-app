@@ -1,12 +1,11 @@
 const nodemailer = require("nodemailer");
 const dotenv = require("dotenv");
-const Otp = require("../Template/Mail/Otp");
 dotenv.config();
-var inlineBase64 = require("nodemailer-plugin-inline-base64")
-const resetPassword = require("../Template/Mail/resetPassword");
+var inlineBase64 = require("nodemailer-plugin-inline-base64");
+const resetPassword = require("../Template//Mail/resetPassword");
 
-const sendEmail = async ( email, otp) => {
-  console.log(email,otp);
+const sendEmailLink = async ( email, url) => {
+  console.log(email,url);
 
   let transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
@@ -31,17 +30,16 @@ const sendEmail = async ( email, otp) => {
 //   });
 
   // send mail with defined transport object
- 
   let info = await transporter.sendMail({
     from: process.env.MAIL_ACCOUNT, // sender address
     to: email, // list of receivers
-    subject: "Verification OTP ", // Subject line
+    subject: "Reset Your Passworf ", // Subject line
     text: "Hello world?", // plain text body
-    html: Otp(email, otp),
+    html: resetPassword(email, url),
     
   });
 };
 
 module.exports = {
-  sendEmail
+    sendEmailLink
 };
