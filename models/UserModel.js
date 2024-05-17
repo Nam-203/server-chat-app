@@ -3,7 +3,7 @@ const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const userSchema = new mongoose.Schema(
   {
-    fistName: { type: String, require: true },
+    firstName: { type: String, require: true },
     lastName: { type: String, require: true },
     email: {
       type: String,
@@ -26,6 +26,13 @@ const userSchema = new mongoose.Schema(
     verified: { type: Boolean, default: false },
     otp: { type: String },
     otp_expiry_time: { type: Date },
+    socket_id : { type: String},
+    friends :[
+      {
+        type :mongoose.Schema.ObjectId,
+        ref : "User"
+      }
+    ]
   },
   {
     timestamps: true,

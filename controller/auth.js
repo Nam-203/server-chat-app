@@ -57,7 +57,8 @@ exports.sendOTP = async (req, res, next) => {
   user.otp = new_otp.toString();
   await user.save({ new: true, validateModifiedOnly: true });
   //todo send otp mail
-  const email = req.body.email;
+  const email = req.body.email
+  console.log(email);
   await mailService.sendEmail(email, new_otp);
   return res.status(200).json({
     status: "success",
@@ -170,7 +171,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 
   // 3) Send it to user's email
   try {
-    const resetURL = `http://localhost:3001/auth/new-password?token=${resetToken}`;
+    const resetURL = `http://localhost:3000/auth/new-password?token=${resetToken}`;
     // TODO => Send Email with this Reset URL to user's email address
 
     console.log(resetURL);

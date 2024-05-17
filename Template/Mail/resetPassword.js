@@ -264,7 +264,7 @@ module.exports = (name, link) => {
     
                                   <div style="color: #958d8d; line-height: 170%; text-align: center; word-wrap: break-word;">
                                     <p style="font-size: 14px; line-height: 170%;">Love 💙 By TIT</p>
-                                    <p style="font-size: 14px; line-height: 170%;">For any assistance and queries write to us at <a rel="noopener" href="mailto:support@namdev.com?" target="_blank">Support@codingmonk.in</a><br /><br /></p>
+                                    <p style="font-size: 14px; line-height: 170%;">For any assistance and queries write to us at <a rel="noopener" href="mailto:support@namdev.com?" target="_blank">support@namdev.com?</a><br /><br /></p>
                                   </div>
     
                                 </td>
