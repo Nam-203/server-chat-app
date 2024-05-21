@@ -11,6 +11,7 @@ router.get("/get-me", authController.protect, userController.getMe);
 //     authController.protect,
 //     userController.generateZegoToken
 // //   );
+
 // router.post("/start-audio-call", authController.protect, userController.startAudioCall);
 // router.post("/start-video-call", authController.protect, userController.startVideoCall);
 module.exports = router;
