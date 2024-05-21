@@ -26,13 +26,14 @@ const userSchema = new mongoose.Schema(
     verified: { type: Boolean, default: false },
     otp: { type: String },
     otp_expiry_time: { type: Date },
-    socket_id : { type: String},
-    friends :[
+    socket_id: { type: String },
+    friends: [
       {
-        type :mongoose.Schema.ObjectId,
-        ref : "User"
-      }
-    ]
+        type: mongoose.Schema.ObjectId,
+        ref: "User",
+      },
+    ],
+    status: { type: String, emun: ["Online", "Offline"] },
   },
   {
     timestamps: true,
@@ -43,7 +44,7 @@ userSchema.pre("save", async function (next) {
   if (!this.isModified("otp") || !this.otp) return next();
 
   // Hash the otp with cost of 12
-  this.otp = await bcrypt.hash(this.otp.toString(),12);
+  this.otp = await bcrypt.hash(this.otp.toString(), 12);
 
   console.log(this.otp.toString(), "FROM PRE SAVE HOOK");
 
